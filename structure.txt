@@ -1,0 +1,60 @@
+
+driver-gesture-detection/
+│
+├── data/
+│   ├── raw/
+│   │   ├── images/
+│   │   │   ├── normal_driving/
+│   │   │   ├── phone_usage/
+│   │   │   ├── eating_drinking/
+│   │   │   ├── fatigue/
+│   │   │   └── other/
+│   │   └── videos/
+│   │       ├── normal/
+│   │       ├── anomalies/
+│   │       └── dashboard_camera/
+│   │
+│   ├── processed/                  # images/frames nettoyées + resized
+│   └── annotations/                # labels YOLO, COCO, CSV
+│
+├── models/
+│   ├── detector/                   # YOLOv8/v11 weights
+│   ├── classifier/                 # CNN/ResNet/ViT weights
+│   └── action_recognition/         # SlowFast / I3D weights
+│
+├── src/
+│   ├── preprocessing.py            # nettoyage, resize, augmentation, frame extraction
+│   ├── training.py                 # train YOLO + CNN/ViT + SlowFast/I3D
+│   ├── inference.py                # inference image/video + DeepSORT tracking
+│   ├── features.py                 # feature extraction (CNN/ViT/3D CNN)
+│   ├── evaluation.py               # metrics, mAP, confusion matrix
+│   └── utils.py                    # helpers généraux
+│
+├── pipeline/
+│   ├── detection_pipeline.py       # pipeline complet : YOLO → classifier → alert
+│   ├── smoothing.py                # moving average, temporal filter
+│   └── frame_extractor.py          # extraction de frames des vidéos
+│
+├── notebooks/
+│   ├── data_exploration.ipynb      # EDA (exploration dataset)
+│   ├── preprocessing_tests.ipynb   # tests d’augmentation
+│   ├── model_experiments.ipynb     # tuning et expérimentations
+│   └── evaluation.ipynb            # analyse des performances finales
+│
+├── logs/
+│   ├── training_logs/              # TensorBoard (loss, accuracy, mAP)
+│   └── inference_logs/
+│
+├── config/
+│   ├── detector_config.yaml        # hyperparamètres YOLO
+│   ├── classifier_config.yaml      # hyperparamètres CNN/ViT
+│   └── pipeline_config.yaml        # seuils, labels, FPS, classes
+│
+├── tests/
+│   ├── test_preprocessing.py
+│   ├── test_training.py            # test YOLO + CNN + 3D CNN
+│   ├── test_inference.py
+│   └── test_pipeline.py
+│
+├── README.md                       # description + instructions
+└── requirements.txt                # dépendances Python
