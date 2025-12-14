@@ -1,51 +1,207 @@
-driver-gesture-detection/
+driver-distraction-detection/                    # ROOT DU PROJET
 │
-├── data/
-│   ├── raw/
-│   │   ├── normal_driving/
-│   │   ├── phone_usage/
-│   │   ├── eating_drinking/
-│   │   └── fatigue_distraction/
+├── 📂 data/                                    # DONNÉES
 │   │
-│   ├── processed/
-│   │   ├── train/
-│   │   ├── val/
-│   │   └── test/
+│   ├── 📁 raw/                                 # IMAGES BRUTES (10 CLASSES)
+│   │   │
+│   │   ├── 📁 c0_safe_driving/                 # Classe 0
+│   │   │   ├── img_10001.jpg
+│   │   │   ├── img_10002.jpg
+│   │   │   └── ... (~2,000 images)
+│   │   │
+│   │   ├── 📁 c1_texting_right/               # Classe 1
+│   │   │   ├── img_20001.jpg
+│   │   │   └── ...
+│   │   │
+│   │   ├── 📁 c2_talking_phone_right/         # Classe 2
+│   │   │   └── ...
+│   │   │
+│   │   ├── 📁 c3_texting_left/                # Classe 3
+│   │   │   └── ...
+│   │   │
+│   │   ├── 📁 c4_talking_phone_left/          # Classe 4
+│   │   │   └── ...
+│   │   │
+│   │   ├── 📁 c5_operating_radio/             # Classe 5
+│   │   │   └── ...
+│   │   │
+│   │   ├── 📁 c6_drinking/                    # Classe 6
+│   │   │   └── ...
+│   │   │
+│   │   ├── 📁 c7_reaching_behind/             # Classe 7
+│   │   │   └── ...
+│   │   │
+│   │   ├── 📁 c8_hair_makeup/                 # Classe 8
+│   │   │   └── ...
+│   │   │
+│   │   └── 📁 c9_talking_passenger/           # Classe 9
+│   │       └── ...
 │   │
-│   └── annotations/
-│       ├── train_labels.csv
-│       ├── val_labels.csv
-│       └── test_labels.csv
-│
-├── models/
-│   ├── detector/
-│   │   └── yolov8_custom.pt
+│   ├── 📁 processed/                          # DONNÉES PRÉTRAITÉES
+│   │   ├── 📁 train/                          # Images augmentées/redimensionnées
+│   │   ├── 📁 val/
+│   │   └── 📁 test/
 │   │
-│   └── classifier/
-│       └── gesture_classifier.pt
+│   └── 📁 annotations/                        # LABELS ET MÉTADONNÉES
+│       ├── 📄 train_labels.csv                # Split d'entraînement
+│       ├── 📄 val_labels.csv                  # Split de validation
+│       ├── 📄 test_labels.csv                 # Split de test
+│       └── 📄 all_labels_complete.csv         # Toutes les infos
 │
-├── src/
-│   ├── preprocess.py          # Prétraitement des images
-│   ├── train.py               # Entraînement des modèles
-│   ├── evaluate.py            # Évaluation des performances
-│   ├── predict.py             # Prédiction sur nouvelles images
-│   └── utils.py               # Fonctions utilitaires
+├── 📂 models/                                 # MODÈLES ENREGISTRÉS
+│   │
+│   ├── 📁 detector/                           # DÉTECTEUR YOLO
+│   │   ├── 📄 yolov8n.pt                      # Modèle pré-entraîné
+│   │   ├── 📄 yolov8_custom.pt               # Modèle fine-tuné
+│   │   └── 📄 best.pt                         # Meilleur checkpoint
+│   │
+│   └── 📁 classifier/                         # CLASSIFICATEUR 10 CLASSES
+│       ├── 📄 resnet18_10classes.pth          # Modèle ResNet18
+│       ├── 📄 efficientnet_10classes.pth      # Modèle EfficientNet
+│       └── 📄 best_classifier.pt              # Meilleur classifieur
 │
-├── config/
-│   ├── data.yaml              # Chemins et paramètres des données
-│   ├── model.yaml             # Paramètres des modèles
-│   └── training.yaml          # Hyperparamètres d'entraînement
+├── 📂 src/                                    # CODE SOURCE
+│   │
+│   ├── 📄 preprocess.py                       # Prétraitement images
+│   │   - Chargement images
+│   │   - Redimensionnement
+│   │   - Augmentation données
+│   │   - Normalisation
+│   │
+│   ├── 📄 dataset.py                          # Dataset PyTorch
+│   │   - Classe Dataset personnalisée
+│   │   - DataLoaders
+│   │   - Transformations
+│   │
+│   ├── 📄 train_classifier.py                 # Entraînement classifieur
+│   │   - Boucle d'entraînement
+│   │   - Validation
+│   │   - Sauvegarde checkpoints
+│   │
+│   ├── 📄 train_detector.py                   # Entraînement YOLO
+│   │   - Configuration YOLOv8
+│   │   - Fine-tuning
+│   │   - Évaluation mAP
+│   │
+│   ├── 📄 evaluate.py                         # Évaluation modèles
+│   │   - Métriques (accuracy, precision, recall)
+│   │   - Matrice de confusion
+│   │   - Visualisation résultats
+│   │
+│   ├── 📄 predict.py                          # Prédictions
+│   │   - Pipeline complet (détection + classification)
+│   │   - Inference sur nouvelles images
+│   │   - Interface simple
+│   │
+│   ├── 📄 utils.py                            # Fonctions utilitaires
+│   │   - Logging
+│   │   - Visualisation
+│   │   - Sauvegarde/chargement
+│   │
+│   └── 📄 pipeline.py                         # Pipeline temps réel
+│       - Détection conducteur
+│       - Classification gestes
+│       - Alertes/sorties
 │
-├── notebooks/
-│   ├── explore_data.ipynb
-│   ├── train_model.ipynb
-│   └── test_model.ipynb
+├── 📂 config/                                 # CONFIGURATIONS
+│   │
+│   ├── 📄 data.yaml                           # Configuration données
+│   │   path: /content/drive/.../data
+│   │   train: annotations/train_labels.csv
+│   │   val: annotations/val_labels.csv
+│   │   test: annotations/test_labels.csv
+│   │   names: [c0_safe_driving, ..., c9_talking_passenger]
+│   │   nc: 10
+│   │
+│   ├── 📄 training.yaml                       # Hyperparamètres
+│   │   batch_size: 32
+│   │   epochs: 50
+│   │   learning_rate: 0.001
+│   │   optimizer: adam
+│   │   augmentation: {...}
+│   │
+│   ├── 📄 model.yaml                          # Architectures
+│   │   classifier: resnet18
+│   │   detector: yolov8n
+│   │   input_size: [320, 320]
+│   │
+│   └── 📄 classes_mapping.yaml               # Mapping détaillé classes
+│       classes:
+│         c0_safe_driving: {id: 0, description: ...}
+│         ... jusqu'à c9
 │
-├── results/
-│   ├── metrics.json           # Métriques finales
-│   ├── confusion_matrix.png
-│   └── sample_predictions/    # Exemples de prédictions
+├── 📂 notebooks/                              # NOTEBOOKS JUPYTER
+│   │
+│   ├── 📄 01_data_exploration.ipynb          # EXPLORATION (NEXT)
+│   │   - Analyse distribution
+│   │   - Visualisation images
+│   │   - Statistiques
+│   │
+│   ├── 📄 02_preprocessing.ipynb             # PRÉTRAITEMENT
+│   │   - Test transformations
+│   │   - Augmentation visuelle
+│   │
+│   ├── 📄 03_train_classifier.ipynb          # ENTRAÎNEMENT CLASSIFIEUR
+│   │   - Expériences ResNet/EfficientNet
+│   │   - Fine-tuning
+│   │
+│   ├── 📄 04_train_detector.ipynb            # ENTRAÎNEMENT YOLO
+│   │   - Détection conducteur
+│   │   - Annotations bbox
+│   │
+│   ├── 📄 05_evaluation.ipynb                # ÉVALUATION
+│   │   - Métriques détaillées
+│   │   - Analyse erreurs
+│   │
+│   └── 📄 06_demo_pipeline.ipynb             # DÉMO COMPLÈTE
+│       - Pipeline temps réel
+│       - Test sur vidéo
 │
-├── requirements.txt
-├── README.md
-└── .gitignore
+├── 📂 results/                                # RÉSULTATS ET SORTIES
+│   │
+│   ├── 📁 training_logs/                      # LOGS D'ENTRAÎNEMENT
+│   │   ├── 📄 classifier_training.log
+│   │   ├── 📄 detector_training.log
+│   │   └── 📄 tensorboard/                   # Visualisation TensorBoard
+│   │
+│   ├── 📁 metrics/                            # MÉTRIQUES
+│   │   ├── 📄 final_metrics.json
+│   │   ├── 📄 confusion_matrix.png
+│   │   ├── 📄 roc_curves.png
+│   │   └── 📄 per_class_metrics.csv
+│   │
+│   ├── 📁 visualizations/                     # VISUALISATIONS
+│   │   ├── 📁 training_curves/
+│   │   ├── 📁 predictions/
+│   │   └── 📁 attention_maps/
+│   │
+│   ├── 📁 sample_predictions/                 # EXEMPLES DE PRÉDICTIONS
+│   │   ├── 📁 correct/
+│   │   ├── 📁 incorrect/
+│   │   └── 📁 difficult_cases/
+│   │
+│   └── 📁 exported_models/                    # MODÈLES EXPORTÉS
+│       ├── 📄 classifier.onnx                 # Pour déploiement
+│       └── 📄 classifier.tflite               # Pour mobile
+│
+├── 📄 requirements.txt                        # DÉPENDANCES PYTHON
+│   torch>=1.9
+│   torchvision
+│   ultralytics (YOLOv8)
+│   opencv-python
+│   pandas, numpy
+│   scikit-learn
+│   matplotlib, seaborn
+│   albumentations (augmentation)
+│   tqdm, pyyaml
+│
+├── 📄 README.md                               # DOCUMENTATION
+│   - Description projet
+│   - Installation
+│   - Utilisation
+│   - Résultats
+│
+└── 📄 .gitignore                              # FICHIERS IGNORÉS GIT
+    - Données brutes
+    - Modèles entraînés
+    - Fichiers temporaires
