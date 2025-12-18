@@ -56,8 +56,8 @@ driver-distraction-detection/                    # ROOT DU PROJET
 │   │   └── 📄 best.pt                         # Meilleur checkpoint
 │   │
 │   └── 📁 classifier/                         # CLASSIFICATEUR 10 CLASSES
-│       ├── 📄 resnet18_10classes.pth          # Modèle ResNet18
-│       ├── 📄 efficientnet_10classes.pth      # Modèle EfficientNet
+│       ├── 📄 resnet50_10classes.pth          # Modèle ResNet18
+│       ├── 📄 efficientnetB3_10classes.pth      # Modèle EfficientNet
 │       └── 📄 best_classifier.pt              # Meilleur classifieur
 │
 ├── 📂 src/                                    # CODE SOURCE
