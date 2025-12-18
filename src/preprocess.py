@@ -7,8 +7,8 @@ from typing import Tuple
 import torch
 from torch.utils.data import Dataset, DataLoader
 
-#import albumentations as A
-#from albumentations.pytorch import ToTensorV2
+import albumentations as A
+from albumentations.pytorch import ToTensorV2
 
 
 #Image loading
@@ -25,9 +25,6 @@ def load_image(image_path):
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
     return image
-img = load_image('C:/Users/hp/Desktop/Projects/Driver_Gesture_Detection_System/img_186.jpg')
-print(img)
-
 
 def resize_image(image, size=(224, 224)):
     """
@@ -49,5 +46,3 @@ def resize_image(image, size=(224, 224)):
     )
 
     return resized_image
-
-print(resize_image(img).shape)
