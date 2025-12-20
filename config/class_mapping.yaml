@@ -1,0 +1,40 @@
+classes:
+  c0:
+    name: "safe_driving"
+    id: 0
+
+  c1:
+    name: "texting - right"
+    id: 1
+
+  c2:
+    name: "talking on the phone - right"
+    id: 2
+
+  c3:
+    name: "texting - left"
+    id: 3
+
+  c4:
+    name: "talking on the phone - left"
+    id: 4
+
+  c5:
+    name: "operating the radio"
+    id: 5
+
+  c6:
+    name: "drinking"
+    id: 6
+
+  c7:
+    name: "reaching behind"
+    id: 7
+
+  c8:
+    name: "hair and makeup"
+    id: 8
+
+  c9:
+    name: "talking to passenger"
+    id: 9

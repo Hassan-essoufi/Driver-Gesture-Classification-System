@@ -62,16 +62,6 @@ driver-distraction-detection/                    # ROOT DU PROJET
 │
 ├── 📂 src/                                    # CODE SOURCE
 │   │
-│   ├── 📄 preprocess.py                       # Prétraitement images
-│   │   - Chargement images
-│   │   - Redimensionnement
-│   │   - Augmentation données
-│   │   - Normalisation
-│   │
-│   ├── 📄 dataset.py                          # Dataset PyTorch
-│   │   - Classe Dataset personnalisée
-│   │   - DataLoaders
-│   │   - Transformations
 │   │
 │   ├── 📄 train_classifier.py                 # Entraînement classifieur
 │   │   - Boucle d'entraînement
