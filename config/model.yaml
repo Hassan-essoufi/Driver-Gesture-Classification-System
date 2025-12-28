@@ -20,5 +20,5 @@ models:
       hidden_dim: null
     fine_tuning:
       freeze_backbone: False
-      unfreeze_from_layer: null
+      unfreeze_from_layer: -5
     use_batch_norm: True
