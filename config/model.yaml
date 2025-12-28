@@ -1,24 +1,24 @@
 models:
   resnet50:
     num_classes: 10
-    pretrained: true
+    pretrained: True
     input_size: 224
     classifier:
       dropout: 0.5
       hidden_dim: null
     fine_tuning:
-      freeze_backbone: false
+      freeze_backbone: False
       unfreeze_from_layer: null
-    use_batch_norm: true
+    use_batch_norm: True
 
   efficientnet_b3:
     num_classes: 10
-    pretrained: true
+    pretrained: True
     input_size: 300
     classifier:
       dropout: 0.5
       hidden_dim: null
     fine_tuning:
-      freeze_backbone: false
+      freeze_backbone: False
       unfreeze_from_layer: null
-    use_batch_norm: true
+    use_batch_norm: True

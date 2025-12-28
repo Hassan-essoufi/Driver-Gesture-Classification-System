@@ -1,11 +1,16 @@
 import os
 import sys
+from pathlib import Path
+
 import torch
+import torch.nn as nn
+import torchvision.models as models
+
 import pandas as pd 
 import numpy as np
 import random
 import yaml
-from pathlib import Path
+import preprocess
 
 
 def load_training_config(
@@ -80,3 +85,66 @@ def setup_environment(config):
     config["logs_dir"] = logs_dir
 
     return device
+
+def build_model(config, model_name):
+    """
+    Build a model based on the configuration.
+    
+    Args:
+        config (dict)
+
+    Returns:
+        PyTorch model
+    """
+    model_cfg = config.get(model_name, "resnet50")
+    num_classes = config.get("num_classes", 10)
+    pretrained = config.get("pretrained", True)
+    classifier_cfg = config.get("classifier", {})
+    dropout_p = classifier_cfg.get("dropout", 0.5)
+    hidden_dim = classifier_cfg.get("hidden_dim", None)
+    fine_tuning_cfg = config.get("fine_tuning", {})
+    freeze_backbone = fine_tuning_cfg.get("freeze_backbone", False)
+    unfreeze_from_layer = fine_tuning_cfg.get("unfreeze_from_layer", None)
+    use_bn = config.get("use_batch_norm", True)
+
+    # Load backbone
+    if model_name.lower() == "resnet50":
+        model = models.resnet50(pretrained=pretrained)
+        in_features = model.fc.in_features  
+    elif model_name.lower() == "efficientnet_b3":
+        model = models.efficientnet_b3(pretrained=pretrained)
+        in_features = model.classifier[1].in_features  
+    else:
+        raise ValueError(f"Unsupported model: {model_name}")
+
+    # Fine-tuning 
+    if freeze_backbone:
+        for param in model.parameters():
+            param.requires_grad = False
+    elif unfreeze_from_layer and model_name.lower() == "resnet50":
+        unfreeze_flag = False
+        for name, param in model.named_parameters():
+            if unfreeze_from_layer in name:
+                unfreeze_flag = True
+            param.requires_grad = unfreeze_flag
+
+    # Replace classifier head
+    layers = []
+    if hidden_dim:  # Optional hidden FC layer
+        layers.append(nn.Linear(in_features, hidden_dim))
+        if use_bn:
+            layers.append(nn.BatchNorm1d(hidden_dim))
+        layers.append(nn.ReLU(inplace=True))
+        layers.append(nn.Dropout(p=dropout_p))
+        layers.append(nn.Linear(hidden_dim, num_classes))
+    else:  # Directly map to num_classes
+        layers.append(nn.Dropout(p=dropout_p))
+        layers.append(nn.Linear(in_features, num_classes))
+
+    if model_name.lower() == "resnet50":
+        model.fc = nn.Sequential(*layers)
+    elif model_name.lower() == "efficientnet_b3":
+        model.classifier = nn.Sequential(*layers)
+
+    return model
+
