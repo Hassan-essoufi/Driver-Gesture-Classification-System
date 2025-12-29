@@ -28,7 +28,7 @@ scheduler:
 # Loss function
 loss:
   name: cross_entropy
-  use_class_weights: false  
+  class_weights: None  
   label_smoothing: 0.0
 
 # Metrics

@@ -5,6 +5,7 @@ from pathlib import Path
 import torch
 import torch.nn as nn
 import torchvision.models as models
+import torch.optim as optim
 
 import pandas as pd 
 import numpy as np
@@ -152,17 +153,16 @@ def build_model(config, model_name):
 
 def build_loss_function(config):
     """
-    - CrossEntropyLoss
-    - class weights
-    - label smoothing
+    CrossEntropyLoss
+  
     """
     loss_cfg = config.get("loss", {})
     
     loss_name = loss_cfg.get("name", "cross_entropy")
     label_smoothing = loss_cfg.get("label_smoothing", 0.0)
-    use_class_weights = loss_cfg.get("use_class_weights", False)
+    class_weights = loss_cfg.get("class_weights", None)
 
-    if use_class_weights :
+    if class_weights is not None:
         class_weights = torch.tensor(class_weights, dtype=torch.float)
 
     if loss_name == "cross_entropy":
@@ -174,4 +174,37 @@ def build_loss_function(config):
         raise ValueError(f"Unsupported loss function: {loss_name}")
 
     return criterion
+
+
+def build_optimizer(model, config):
+    """
+    Optimizer (Adam / AdamW).
+    """
+    optim_cfg = config.get("optimizer", {})
+    
+    optimizer_name = optim_cfg.get("name", "adamw").lower()
+    lr = optim_cfg.get("lr", 1e-3)
+    weight_decay = optim_cfg.get("weight_decay", 1e-4)
+
+    params = filter(lambda p: p.requires_grad, model.parameters())
+
+    if optimizer_name == "adam":
+        optimizer = optim.Adam(
+            params,
+            lr=lr,
+            weight_decay=weight_decay
+        )
+
+    elif optimizer_name == "adamw":
+        optimizer = optim.AdamW(
+            params,
+            lr=lr,
+            weight_decay=weight_decay
+        )
+
+    else:
+        raise ValueError(f"Unsupported optimizer: {optimizer_name}")
+
+    return optimizer
+
 
