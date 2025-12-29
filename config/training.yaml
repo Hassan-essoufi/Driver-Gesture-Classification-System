@@ -3,14 +3,14 @@
 dataloader:
   batch_size: 32
   num_workers: 4
-  pin_memory: true
-  shuffle: true
+  pin_memory: True
+  shuffle: True
 
 # Training parameters
 training:
   epochs: 30
   early_stopping_patience: 7
-  mixed_precision: true
+  mixed_precision: True
 
 # Optimizer
 optimizer:
@@ -24,6 +24,7 @@ scheduler:
   factor: 0.3
   patience: 3
   min_lr: 0.000001
+
 
 # Loss function
 loss:
@@ -39,6 +40,6 @@ metrics:
 
 # Logging & saving
 output_dir: results
-save_best_model: true
+save_best_model: True
 monitor_metric: val_f1_macro
 monitor_mode: max
