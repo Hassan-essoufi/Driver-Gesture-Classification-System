@@ -97,15 +97,15 @@ def build_model(config, model_name):
         PyTorch model
     """
     model_cfg = config.get(model_name, "resnet50")
-    num_classes = config.get("num_classes", 10)
-    pretrained = config.get("pretrained", True)
-    classifier_cfg = config.get("classifier", {})
+    num_classes = model_cfg.get("num_classes", 10)
+    pretrained = model_cfg.get("pretrained", True)
+    classifier_cfg = model_cfg.get("classifier", {})
     dropout_p = classifier_cfg.get("dropout", 0.5)
     hidden_dim = classifier_cfg.get("hidden_dim", None)
-    fine_tuning_cfg = config.get("fine_tuning", {})
+    fine_tuning_cfg = model_cfg.get("fine_tuning", {})
     freeze_backbone = fine_tuning_cfg.get("freeze_backbone", False)
     unfreeze_from_layer = fine_tuning_cfg.get("unfreeze_from_layer", None)
-    use_bn = config.get("use_batch_norm", True)
+    use_bn = model_cfg.get("use_batch_norm", True)
 
     # Load backbone
     if model_name.lower() == "resnet50":
@@ -130,14 +130,16 @@ def build_model(config, model_name):
 
     # Replace classifier head
     layers = []
-    if hidden_dim:  # Optional hidden FC layer
+    if hidden_dim:  
+        # Optional hidden FC layer
         layers.append(nn.Linear(in_features, hidden_dim))
         if use_bn:
             layers.append(nn.BatchNorm1d(hidden_dim))
         layers.append(nn.ReLU(inplace=True))
         layers.append(nn.Dropout(p=dropout_p))
         layers.append(nn.Linear(hidden_dim, num_classes))
-    else:  # Directly map to num_classes
+    else:  
+        # map to num_classes
         layers.append(nn.Dropout(p=dropout_p))
         layers.append(nn.Linear(in_features, num_classes))
 
@@ -147,4 +149,29 @@ def build_model(config, model_name):
         model.classifier = nn.Sequential(*layers)
 
     return model
+
+def build_loss_function(config):
+    """
+    - CrossEntropyLoss
+    - class weights
+    - label smoothing
+    """
+    loss_cfg = config.get("loss", {})
+    
+    loss_name = loss_cfg.get("name", "cross_entropy")
+    label_smoothing = loss_cfg.get("label_smoothing", 0.0)
+    use_class_weights = loss_cfg.get("use_class_weights", False)
+
+    if use_class_weights :
+        class_weights = torch.tensor(class_weights, dtype=torch.float)
+
+    if loss_name == "cross_entropy":
+        criterion = nn.CrossEntropyLoss(
+            weight=class_weights,
+            label_smoothing=label_smoothing
+        )
+    else:
+        raise ValueError(f"Unsupported loss function: {loss_name}")
+
+    return criterion
 

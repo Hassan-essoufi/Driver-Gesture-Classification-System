@@ -4,11 +4,11 @@ models:
     pretrained: True
     input_size: 224
     classifier:
-      dropout: 0.5
+      dropout: 0.3
       hidden_dim: null
     fine_tuning:
       freeze_backbone: False
-      unfreeze_from_layer: null
+      unfreeze_from_layer: 'layer1'
     use_batch_norm: True
 
   efficientnet_b3:
@@ -16,9 +16,9 @@ models:
     pretrained: True
     input_size: 300
     classifier:
-      dropout: 0.5
+      dropout: 0.3
       hidden_dim: null
     fine_tuning:
       freeze_backbone: False
-      unfreeze_from_layer: -5
+      unfreeze_from_layer: 'layer1'
     use_batch_norm: True

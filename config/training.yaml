@@ -28,7 +28,8 @@ scheduler:
 # Loss function
 loss:
   name: cross_entropy
-  use_class_weights: false   # set true only if imbalance appears
+  use_class_weights: false  
+  label_smoothing: 0.0
 
 # Metrics
 metrics:
