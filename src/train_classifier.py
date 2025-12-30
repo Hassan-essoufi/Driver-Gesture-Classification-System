@@ -6,6 +6,11 @@ import torch
 import torch.nn as nn
 import torchvision.models as models
 import torch.optim as optim
+from torch.optim.lr_scheduler import (
+    StepLR,
+    CosineAnnealingLR,
+    ReduceLROnPlateau
+)
 
 import pandas as pd 
 import numpy as np
@@ -207,4 +212,46 @@ def build_optimizer(model, config):
 
     return optimizer
 
+
+
+def build_scheduler(optimizer, config):
+    """
+    Learning rate scheduler.
+    """
+    sched_cfg = config.get("scheduler", {})
+    
+    scheduler_name = sched_cfg.get("name", None)
+
+    if scheduler_name is None:
+        return None
+
+    scheduler_name = scheduler_name.lower()
+
+    if scheduler_name == "step":
+        scheduler = StepLR(
+            optimizer,
+            step_size=sched_cfg.get("step_size", 10),
+            gamma=sched_cfg.get("gamma", 0.1)
+        )
+
+    elif scheduler_name == "cosine":
+        scheduler = CosineAnnealingLR(
+            optimizer,
+            T_max=sched_cfg.get("t_max", 20),
+            eta_min=sched_cfg.get("eta_min", 1e-6)
+        )
+
+    elif scheduler_name == "plateau":
+        scheduler = ReduceLROnPlateau(
+            optimizer,
+            mode="max",
+            factor=sched_cfg.get("factor", 0.1),
+            patience=sched_cfg.get("patience", 5),
+            min_lr=sched_cfg.get("min_lr", 1e-6)
+        )
+
+    else:
+        raise ValueError(f"Unsupported scheduler: {scheduler_name}")
+
+    return scheduler
 
