@@ -324,9 +324,6 @@ def validate_one_epoch(model, val_loader, criterion, device):
 
     return avg_loss, accuracy
 
-import os
-import torch
-
 def save_checkpoint(state, config):
     """
     Save model checkpoints.
