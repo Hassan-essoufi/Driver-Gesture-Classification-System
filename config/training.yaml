@@ -40,6 +40,5 @@ metrics:
 
 # Logging & saving
 output_dir: results
+checkpoint_dir: models
 save_best_model: True
-monitor_metric: val_f1_macro
-monitor_mode: max

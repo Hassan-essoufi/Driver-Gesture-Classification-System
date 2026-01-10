@@ -16,6 +16,8 @@ import pandas as pd
 import numpy as np
 import random
 import yaml
+import tqdm
+
 import preprocess
 
 
@@ -254,4 +256,97 @@ def build_scheduler(optimizer, config):
         raise ValueError(f"Unsupported scheduler: {scheduler_name}")
 
     return scheduler
+
+
+def train_one_epoch(model, train_loader, criterion, optimizer, device):
+    """
+    Perform one training epoch.
+    """
+
+    model.train() 
+    running_loss = 0.0
+    correct = 0
+    total = 0
+
+    for images, labels in tqdm(train_loader, desc="Training", leave=False):
+        images = images.to(device)
+        labels = labels.to(device)
+
+        optimizer.zero_grad()
+
+        # Forward pass
+        outputs = model(images)
+        loss = criterion(outputs, labels)
+
+        # Backward pass
+        loss.backward()
+
+        optimizer.step()
+        running_loss += loss.item() * images.size(0)
+
+        _, preds = torch.max(outputs, dim=1)
+        correct += (preds == labels).sum().item()
+        total += labels.size(0)
+
+    # Training epoch metrics
+    avg_loss = running_loss / total
+    accuracy = correct / total
+
+    return avg_loss, accuracy
+
+
+def validate_one_epoch(model, val_loader, criterion, device):
+    """
+    Perform one validation epoch.
+    """
+
+    model.eval() 
+    running_loss = 0.0
+    correct = 0
+    total = 0
+
+    for images, labels in tqdm(val_loader, desc="Validation", leave=False):
+        images = images.to(device)
+        labels = labels.to(device)
+
+        outputs = model(images)
+        loss = criterion(outputs, labels)
+
+        running_loss += loss.item() * images.size(0)
+
+        _, preds = torch.max(outputs, dim=1)
+        correct += (preds == labels).sum().item()
+        total += labels.size(0)
+
+    # Validation epoch metrics
+    avg_loss = running_loss / total
+    accuracy = correct / total
+
+    return avg_loss, accuracy
+
+import os
+import torch
+
+def save_checkpoint(state, config):
+    """
+    Save model checkpoints.
+    Keep best model based on validation performance.
+    """
+
+    checkpoint_dir = config.get("checkpoint_dir", "models")
+    os.makedirs(checkpoint_dir, exist_ok=True)
+
+    is_best = config.get("save_best_model", True)
+
+    last_ckpt_path = os.path.join(checkpoint_dir, "last_checkpoint.pth")
+    torch.save(state, last_ckpt_path)
+
+    # Save best_model 
+    if is_best:
+        best_model_path = os.path.join(checkpoint_dir, "best_classifier.pth")
+        torch.save(state, best_model_path)
+
+        print(f"Best model updated and saved at: {best_model_path}")
+
+    print(f"Checkpoint saved: {last_ckpt_path}")
 
