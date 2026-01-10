@@ -206,12 +206,12 @@ def evaluate_both_models(y_true: np.ndarray,
         class_names = [f'c{i}' for i in range(10)]
     
     # 1. Calcul des métriques
-    print("📊 Calcul des métriques...")
+    print("Calcul des métriques...")
     metrics = evaluate_model_performance(y_true, efficient_pred, resnet_pred)
     
     # 2. Affichage des scores
     print("\n" + "="*50)
-    print("🎯 RÉSULTATS - EFFICIENTNET vs RESNET18")
+    print(" RÉSULTATS - EFFICIENTNET vs RESNET18")
     print("="*50)
     
     print(f"\n{'Métrique':<15} {'EfficientNet':<15} {'ResNet18':<15} {'Différence':<12}")
@@ -230,7 +230,7 @@ def evaluate_both_models(y_true: np.ndarray,
     eff_score = np.mean([metrics['efficientnet'][m] for m in ['accuracy', 'f1']])
     res_score = np.mean([metrics['resnet18'][m] for m in ['accuracy', 'f1']])
     
-    print("\n" + "="*50)
+    
     if eff_score > res_score:
         print(f"EfficientNet est meilleur (score: {eff_score:.4f} vs {res_score:.4f})")
     elif res_score > eff_score:
@@ -240,7 +240,7 @@ def evaluate_both_models(y_true: np.ndarray,
     print("="*50)
     
     # 4. Générer les visualisations
-    print("\n🖼️ Génération des visualisations...")
+    
     fig1, fig2 = plot_model_comparison(metrics, class_names)
     fig3 = plot_per_class_comparison(metrics, class_names)
     fig4 = plot_error_analysis(y_true, efficient_pred, resnet_pred, class_names)
