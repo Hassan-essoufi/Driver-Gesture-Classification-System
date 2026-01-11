@@ -324,16 +324,14 @@ def validate_one_epoch(model, val_loader, criterion, device):
 
     return avg_loss, accuracy
 
-def save_checkpoint(state, config):
+def save_checkpoint(state, config, is_best):
     """
     Save model checkpoints.
     Keep best model based on validation performance.
     """
 
-    checkpoint_dir = config.get("checkpoint_dir", "models")
+    checkpoint_dir = config.get("checkpoint_dir", "checkpoints")
     os.makedirs(checkpoint_dir, exist_ok=True)
-
-    is_best = config.get("save_best_model", True)
 
     last_ckpt_path = os.path.join(checkpoint_dir, "last_checkpoint.pth")
     torch.save(state, last_ckpt_path)
@@ -444,7 +442,39 @@ def train_classifier(images_dir, model_name):
     print("\nTraining completed.")
     print(f"Best validation accuracy: {best_val_acc:.4f}")    
 
-    
+def load_best_model(config, model_name, device):
+    """
+    Load the best trained model from checkpoints.
+    """
+
+    model = build_model(config, model_name)
+    model.to(device)
+
+    checkpoint_dir = config.get("checkpoint_dir", "checkpoints")
+    checkpoint_path = os.path.join(
+        checkpoint_dir, f"{model_name}_best.pth"
+    )
+
+    if not os.path.exists(checkpoint_path):
+        raise FileNotFoundError(
+            f"Best model checkpoint not found: {checkpoint_path}"
+        )
+
+    # Loading checkpoint
+    checkpoint = torch.load(checkpoint_path, map_location=device)
+
+    # Loading model weights
+    model.load_state_dict(checkpoint["model_state_dict"])
+
+    # Evaluation mode
+    model.eval()
+
+    print(f"Loaded best model from: {checkpoint_path}")
+
+    return model
+
+
+
 
 
 

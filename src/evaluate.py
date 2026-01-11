@@ -6,7 +6,7 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 
 
 
-def compute_model_metrics(y_true, y_pred, model_name=""):
+def compute_model_metrics(y_true, y_pred, model_name):
     """Compute metrics for a single model."""
     return {
         'model': model_name,
@@ -227,15 +227,3 @@ def generate_visualizations(metrics_dict, class_names, y_true, predictions_dict)
     return figs
 
 
-def get_best_model(metrics_dict):
-    """Return the best model based on average F1-Score."""
-    avg_scores = {}
-    for name, metrics in metrics_dict.items():
-        avg_scores[name] = np.mean([
-            metrics['accuracy'],
-            metrics['precision'], 
-            metrics['recall'],
-            metrics['f1']
-        ])
-    
-    return max(avg_scores, key=avg_scores.get)

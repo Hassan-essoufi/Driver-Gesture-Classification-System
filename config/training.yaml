@@ -39,6 +39,6 @@ metrics:
 
 # Logging & saving
 output_dir: results
-checkpoint_dir: models
+checkpoint_dir: checkpoints
 save_best_model: True
 mode: max
