@@ -16,7 +16,7 @@ import pandas as pd
 import numpy as np
 import random
 import yaml
-import tqdm
+from tqdm.notebook import tqdm
 
 import preprocess
 
@@ -169,7 +169,7 @@ def build_loss_function(config):
     label_smoothing = loss_cfg.get("label_smoothing", 0.0)
     class_weights = loss_cfg.get("class_weights", None)
 
-    if class_weights is not None:
+    if class_weights is not None and class_weights != "null":
         class_weights = torch.tensor(class_weights, dtype=torch.float)
 
     if loss_name == "cross_entropy":
