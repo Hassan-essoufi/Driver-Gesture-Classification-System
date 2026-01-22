@@ -1,0 +1,36 @@
+{
+  "project_info": {
+    "project_name": "Driver Distraction Detection",
+    "training_date": "2026-01-19",
+    "training_time": "20:58:19",
+    "test_mode": false,
+    "total_models_trained": 0,
+    "trained_models": [],
+    "best_model": null,
+    "device_used": "cuda"
+  },
+  "dataset_info": {
+    "training_samples": 17939,
+    "validation_samples": 2242,
+    "test_samples": 2243,
+    "total_samples": 22424,
+    "input_size": [
+      224,
+      224
+    ],
+    "batch_size": 32,
+    "num_classes": 10
+  },
+  "training_configuration": {
+    "epochs": 30,
+    "early_stopping_patience": 7,
+    "learning_rate": 0.0001,
+    "optimizer": "adamw",
+    "loss_function": "cross_entropy"
+  },
+  "visualization_info": {
+    "prediction_visualizations_created": true,
+    "visualization_directory": "results/prediction_visualizations"
+  },
+  "model_performance": {}
+}

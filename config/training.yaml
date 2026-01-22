@@ -1,41 +1,36 @@
-
 # Dataloader parameters
 dataloader:
-  batch_size: 32
-  num_workers: 4
+  batch_size: 64                
+  num_workers: 8                
   shuffle: True
 
-# Training parameters
+# Training parameters - OPTIMISÉ
 training:
-  epochs: 30
-  early_stopping_patience: 7
-  mixed_precision: True
+  epochs: 20                    
+  early_stopping_patience: 5    
+  mixed_precision: True         
 
-# Optimizer
+# Optimizer - OPTIMISÉ POUR CONVERGENCE RAPIDE
 optimizer:
   name: adamw
-  lr: 0.0001
-  weight_decay: 0.00001
-
-# Learning rate scheduler
+  lr: 0.0003                    
+  weight_decay: 0.0005          
+# Learning rate scheduler - OPTIMISÉ
 scheduler:
-  name: reduce_on_plateau
-  factor: 0.3
-  patience: 3
-  min_lr: 0.000001
+  name: cosine                  
+  t_max: 20                     
+  eta_min: 0.00001              
 
-
-# Loss function
+# Loss function - ÉQUILIBRÉ
 loss:
   name: cross_entropy
-  class_weights: None  
-  label_smoothing: 0.0
+  class_weights: null
+  label_smoothing: 0.05         
 
 # Metrics
 metrics:
   - accuracy
   - f1_macro
-  - auc_roc
 
 # Logging & saving
 output_dir: results

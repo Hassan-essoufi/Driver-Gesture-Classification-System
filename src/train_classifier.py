@@ -1,6 +1,9 @@
+"""Training functions for driver distraction detection"""
+
 import os
 import sys
 from pathlib import Path
+from datetime import datetime
 
 import torch
 import torch.nn as nn
@@ -16,29 +19,12 @@ import pandas as pd
 import numpy as np
 import random
 import yaml
-import tqdm
+from tqdm.notebook import tqdm
 
-import preprocess
-
-
-def load_training_config(
-    training_cfg_path="config/training.yaml",
-    model_cfg_path="config/model.yaml"
-):
+def load_training_config(training_cfg_path, model_cfg_path):
     """
-    Load training and model configuration files
-    and merge them into a single config dictionary.
+    Load and merge configuration files.
     """
-
-    training_cfg_path = Path(training_cfg_path)
-    model_cfg_path = Path(model_cfg_path)
-
-    if not training_cfg_path.exists():
-        raise FileNotFoundError(f"Training config not found: {training_cfg_path}")
-
-    if not model_cfg_path.exists():
-        raise FileNotFoundError(f"Model config not found: {model_cfg_path}")
-
     # Load YAML files
     with open(training_cfg_path, "r") as f:
         training_cfg = yaml.safe_load(f)
@@ -46,7 +32,7 @@ def load_training_config(
     with open(model_cfg_path, "r") as f:
         model_cfg = yaml.safe_load(f)
 
-    # Merge configs
+    # Merge configurations
     config = {
         **training_cfg,
         **model_cfg
@@ -56,55 +42,36 @@ def load_training_config(
 
 def setup_environment(config):
     """
-    Setup training environment:
-    - device (CPU or GPU)
-    - reproducibility
-    - output directories
+    Setup training environment with reproducibility.
+    Returns only the device.
     """
-
-    # Device
+    # Set device
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"[INFO] Using device: {device}")
-
-    # Reproducibility
+    
+    # Set random seeds for reproducibility
     seed = config.get("seed", 42)
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
+    
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
-
-    print(f"[INFO] Random seed set to {seed}")
-
-    # Output directories
-    output_root = Path(config.get("output_dir", "results"))
-    checkpoints_dir = output_root / "checkpoints"
-    logs_dir = output_root / "training_logs"
-
-    checkpoints_dir.mkdir(parents=True, exist_ok=True)
-    logs_dir.mkdir(parents=True, exist_ok=True)
-
-    print(f"[INFO] Checkpoints directory: {checkpoints_dir}")
-    print(f"[INFO] Logs directory: {logs_dir}")
-
-    # Save paths in config for later use
-    config["checkpoints_dir"] = checkpoints_dir
-    config["logs_dir"] = logs_dir
-
+    
     return device
 
 def build_model(config, model_name):
     """
     Build a model based on the configuration.
-    
-    Args:
-        config (dict)
-
-    Returns:
-        PyTorch model
     """
-    model_cfg = config.get(model_name, "resnet50")
+    # Get model configuration from the models section
+    if 'models' in config and model_name in config['models']:
+        model_cfg = config['models'][model_name]
+    else:
+        raise ValueError(f"Model '{model_name}' not found in configuration")
+    
+    # Extract model parameters
     num_classes = model_cfg.get("num_classes", 10)
     pretrained = model_cfg.get("pretrained", True)
     classifier_cfg = model_cfg.get("classifier", {})
@@ -115,17 +82,17 @@ def build_model(config, model_name):
     unfreeze_from_layer = fine_tuning_cfg.get("unfreeze_from_layer", None)
     use_bn = model_cfg.get("use_batch_norm", True)
 
-    # Load backbone
+    # Load backbone based on model name
     if model_name.lower() == "resnet50":
         model = models.resnet50(pretrained=pretrained)
-        in_features = model.fc.in_features  
+        in_features = model.fc.in_features
     elif model_name.lower() == "efficientnet_b3":
         model = models.efficientnet_b3(pretrained=pretrained)
-        in_features = model.classifier[1].in_features  
+        in_features = model.classifier[1].in_features
     else:
         raise ValueError(f"Unsupported model: {model_name}")
 
-    # Fine-tuning 
+    # Apply fine-tuning settings
     if freeze_backbone:
         for param in model.parameters():
             param.requires_grad = False
@@ -136,21 +103,22 @@ def build_model(config, model_name):
                 unfreeze_flag = True
             param.requires_grad = unfreeze_flag
 
-    # Replace classifier head
+    # Build classifier layers
     layers = []
-    if hidden_dim:  
-        # Optional hidden FC layer
+    if hidden_dim:
+        # With hidden layer
         layers.append(nn.Linear(in_features, hidden_dim))
         if use_bn:
             layers.append(nn.BatchNorm1d(hidden_dim))
         layers.append(nn.ReLU(inplace=True))
         layers.append(nn.Dropout(p=dropout_p))
         layers.append(nn.Linear(hidden_dim, num_classes))
-    else:  
-        # map to num_classes
+    else:
+        # Direct classification
         layers.append(nn.Dropout(p=dropout_p))
         layers.append(nn.Linear(in_features, num_classes))
 
+    # Replace the classifier
     if model_name.lower() == "resnet50":
         model.fc = nn.Sequential(*layers)
     elif model_name.lower() == "efficientnet_b3":
@@ -160,8 +128,7 @@ def build_model(config, model_name):
 
 def build_loss_function(config):
     """
-    CrossEntropyLoss
-  
+    Build loss function from configuration.
     """
     loss_cfg = config.get("loss", {})
     
@@ -169,7 +136,7 @@ def build_loss_function(config):
     label_smoothing = loss_cfg.get("label_smoothing", 0.0)
     class_weights = loss_cfg.get("class_weights", None)
 
-    if class_weights is not None:
+    if class_weights is not None and class_weights != "null":
         class_weights = torch.tensor(class_weights, dtype=torch.float)
 
     if loss_name == "cross_entropy":
@@ -182,10 +149,9 @@ def build_loss_function(config):
 
     return criterion
 
-
 def build_optimizer(model, config):
     """
-    Optimizer (Adam / AdamW).
+    Build optimizer from configuration.
     """
     optim_cfg = config.get("optimizer", {})
     
@@ -193,6 +159,7 @@ def build_optimizer(model, config):
     lr = optim_cfg.get("lr", 1e-3)
     weight_decay = optim_cfg.get("weight_decay", 1e-4)
 
+    # Filter parameters that require gradients
     params = filter(lambda p: p.requires_grad, model.parameters())
 
     if optimizer_name == "adam":
@@ -201,24 +168,20 @@ def build_optimizer(model, config):
             lr=lr,
             weight_decay=weight_decay
         )
-
     elif optimizer_name == "adamw":
         optimizer = optim.AdamW(
             params,
             lr=lr,
             weight_decay=weight_decay
         )
-
     else:
         raise ValueError(f"Unsupported optimizer: {optimizer_name}")
 
     return optimizer
 
-
-
 def build_scheduler(optimizer, config):
     """
-    Learning rate scheduler.
+    Build learning rate scheduler from configuration.
     """
     sched_cfg = config.get("scheduler", {})
     
@@ -235,14 +198,12 @@ def build_scheduler(optimizer, config):
             step_size=sched_cfg.get("step_size", 10),
             gamma=sched_cfg.get("gamma", 0.1)
         )
-
     elif scheduler_name == "cosine":
         scheduler = CosineAnnealingLR(
             optimizer,
             T_max=sched_cfg.get("t_max", 20),
             eta_min=sched_cfg.get("eta_min", 1e-6)
         )
-
     elif scheduler_name == "reduce_on_plateau":
         scheduler = ReduceLROnPlateau(
             optimizer,
@@ -251,19 +212,16 @@ def build_scheduler(optimizer, config):
             patience=sched_cfg.get("patience", 5),
             min_lr=sched_cfg.get("min_lr", 1e-6)
         )
-
     else:
         raise ValueError(f"Unsupported scheduler: {scheduler_name}")
 
     return scheduler
 
-
 def train_one_epoch(model, train_loader, criterion, optimizer, device):
     """
-    Perform one training epoch.
+    Train for one epoch.
     """
-
-    model.train() 
+    model.train()
     running_loss = 0.0
     correct = 0
     total = 0
@@ -280,202 +238,218 @@ def train_one_epoch(model, train_loader, criterion, optimizer, device):
 
         # Backward pass
         loss.backward()
-
         optimizer.step()
-        running_loss += loss.item() * images.size(0)
 
+        # Statistics
+        running_loss += loss.item() * images.size(0)
         _, preds = torch.max(outputs, dim=1)
         correct += (preds == labels).sum().item()
         total += labels.size(0)
 
-    # Training epoch metrics
-    avg_loss = running_loss / total
-    accuracy = correct / total
+    # Calculate epoch metrics
+    avg_loss = running_loss / total if total > 0 else 0.0
+    accuracy = correct / total if total > 0 else 0.0
 
     return avg_loss, accuracy
 
-
 def validate_one_epoch(model, val_loader, criterion, device):
     """
-    Perform one validation epoch.
+    Validate for one epoch.
     """
-
-    model.eval() 
+    model.eval()
     running_loss = 0.0
     correct = 0
     total = 0
 
-    for images, labels in tqdm(val_loader, desc="Validation", leave=False):
-        images = images.to(device)
-        labels = labels.to(device)
+    with torch.no_grad():
+        for images, labels in tqdm(val_loader, desc="Validation", leave=False):
+            images = images.to(device)
+            labels = labels.to(device)
 
-        outputs = model(images)
-        loss = criterion(outputs, labels)
+            outputs = model(images)
+            loss = criterion(outputs, labels)
 
-        running_loss += loss.item() * images.size(0)
+            running_loss += loss.item() * images.size(0)
+            _, preds = torch.max(outputs, dim=1)
+            correct += (preds == labels).sum().item()
+            total += labels.size(0)
 
-        _, preds = torch.max(outputs, dim=1)
-        correct += (preds == labels).sum().item()
-        total += labels.size(0)
-
-    # Validation epoch metrics
-    avg_loss = running_loss / total
-    accuracy = correct / total
+    # Calculate epoch metrics
+    avg_loss = running_loss / total if total > 0 else 0.0
+    accuracy = correct / total if total > 0 else 0.0
 
     return avg_loss, accuracy
 
 def save_checkpoint(state, config, is_best):
     """
-    Save model checkpoints.
-    Keep best model based on validation performance.
+    Save model checkpoint.
     """
-
-    checkpoint_dir = config.get("checkpoint_dir", "checkpoints")
-    os.makedirs(checkpoint_dir, exist_ok=True)
-
-    last_ckpt_path = os.path.join(checkpoint_dir, "last_checkpoint.pth")
-    torch.save(state, last_ckpt_path)
-
-    # Save best_model 
-    if is_best:
-        best_model_path = os.path.join(checkpoint_dir, "best_classifier.pth")
-        torch.save(state, best_model_path)
-
-        print(f"Best model updated and saved at: {best_model_path}")
-
-    print(f"Checkpoint saved: {last_ckpt_path}")
-
-def train_classifier(images_dir, model_name):
-    """
-    Full training pipeline
-    """
-    # Loading config
-    config = load_training_config(
-        training_cfg_path="config/training.yaml",
-        model_cfg_path="config/model.yaml")
+    # Get model name from state
+    model_name = state.get('model_name', 'model')
     
-    # Device
+    # Get checkpoint directory
+    checkpoint_dir = Path(config.get('checkpoint_dir', 'checkpoints'))
+    checkpoint_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Save last checkpoint
+    last_checkpoint_path = checkpoint_dir / f"{model_name}_last.pth"
+    torch.save(state, last_checkpoint_path)
+    
+    # Save best checkpoint if it's the best model
+    if is_best:
+        best_checkpoint_path = checkpoint_dir / f"{model_name}_best.pth"
+        torch.save(state, best_checkpoint_path)
+
+def train_classifier(config, model_name, train_loader, val_loader, checkpoints_dir):
+    """
+    Main training function for a single model.
+    """
+    # Setup environment
     device = setup_environment(config)
-
-    # Dataloaders
-    loader_conf = config.get("dataloader", "")
-    batch_size = loader_conf.get("batch_size", 2)
-    num_workers = loader_conf.get("num_workers", 2)
-    shuffle = loader_conf.get("shuffle", True)
-
-    model_conf = config.get(model_name, "resnet50")
-    input_size = model_conf.get("input_size", (224,224))
-
-    train_transform = preprocess.get_train_transforms(input_size)
-    val_transform = preprocess.get_val_transforms(input_size)
-
-    train_loader = preprocess.create_dataloader(
-        "data/annotations/train_labels.csv", images_dir,
-        train_transform, batch_size,
-        shuffle, num_workers
-    )
-
-    val_loader = preprocess.create_dataloader(
-        "data/annotations/val_labels.csv", images_dir,
-        val_transform, batch_size,
-        shuffle, num_workers
-    )
-
-    # Model
+    
+    # Build model
     model = build_model(config, model_name)
     model.to(device)
-
+    
+    # Calculate model statistics
+    total_params = sum(p.numel() for p in model.parameters())
+    trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    
+    print(f"Model statistics:")
+    print(f"  - Total parameters: {total_params:,}")
+    print(f"  - Trainable parameters: {trainable_params:,}")
+    print(f"  - Trainable percentage: {trainable_params/total_params*100:.1f}%")
+    
+    # Build loss function
     criterion = build_loss_function(config)
+    
+    # Build optimizer
     optimizer = build_optimizer(model, config)
+    
+    # Build scheduler
     scheduler = build_scheduler(optimizer, config)
-
-    # Training
+    
+    # Training parameters
+    training_params = config.get('training', {})
+    num_epochs = training_params.get('epochs', 30)
+    early_stopping_patience = training_params.get('early_stopping_patience', 7)
+    
+    # Training history
+    history = {
+        'train_loss': [],
+        'train_acc': [],
+        'val_loss': [],
+        'val_acc': []
+    }
+    
+    # Training state
     best_val_acc = 0.0
-    num_epochs = config["training"]["epochs"]
-
+    best_epoch = 0
+    early_stopping_counter = 0
+    
+    print(f"\nStarting training for {num_epochs} epochs...")
+    
+    # Training loop
     for epoch in range(num_epochs):
         print(f"\nEpoch [{epoch+1}/{num_epochs}]")
-
+        
+        # Training phase
         train_loss, train_acc = train_one_epoch(
-            model,
-            train_loader,
-            criterion,
-            optimizer,
-            device)
-
+            model, train_loader, criterion, optimizer, device
+        )
+        
+        # Validation phase
         val_loss, val_acc = validate_one_epoch(
-            model,
-            val_loader,
-            criterion,
-            device)
-        #  Scheduler
+            model, val_loader, criterion, device
+        )
+        
+        # Update learning rate
+        current_lr = optimizer.param_groups[0]['lr']
         if scheduler is not None:
-            if config["scheduler"]["type"] == "ReduceLROnPlateau":
+            if isinstance(scheduler, ReduceLROnPlateau):
                 scheduler.step(val_loss)
             else:
                 scheduler.step()
-
-        print(
-            f"Train Loss: {train_loss:.4f} | Train Acc: {train_acc:.4f} | "
-            f"Val Loss: {val_loss:.4f} | Val Acc: {val_acc:.4f}"
-        )
-
-        # Checkpoint
+        
+        # Record history
+        history['train_loss'].append(train_loss)
+        history['train_acc'].append(train_acc)
+        history['val_loss'].append(val_loss)
+        history['val_acc'].append(val_acc)
+        
+        # Display metrics
+        print(f"  Training   - Loss: {train_loss:.4f}, Accuracy: {train_acc:.4f}")
+        print(f"  Validation - Loss: {val_loss:.4f}, Accuracy: {val_acc:.4f}")
+        print(f"  Learning Rate: {current_lr:.6f}")
+        
+        # Check for best model
         is_best = val_acc > best_val_acc
+        
         if is_best:
             best_val_acc = val_acc
-
+            best_epoch = epoch + 1
+            early_stopping_counter = 0
+            print(f"  ✓ New best model! Validation accuracy: {val_acc:.4f}")
+        else:
+            early_stopping_counter += 1
+            print(f"  Early stopping counter: {early_stopping_counter}/{early_stopping_patience}")
+        
+        # Create checkpoint
         checkpoint_state = {
-            "epoch": epoch + 1,
-            "model_state": model.state_dict(),
-            "optimizer_state": optimizer.state_dict(),
-            "best_val_acc": best_val_acc,
-            "config": config
+            'epoch': epoch + 1,
+            'model_state': model.state_dict(),
+            'optimizer_state': optimizer.state_dict(),
+            'best_val_acc': best_val_acc,
+            'config': config,
+            'model_name': model_name,
+            'history': history
         }
-
-        save_checkpoint(
-            state=checkpoint_state,
-            is_best=is_best,
-            config=config
-        )
-
-    print("\nTraining completed.")
-    print(f"Best validation accuracy: {best_val_acc:.4f}")    
+        
+        # Save checkpoint
+        save_checkpoint(checkpoint_state, config, is_best)
+        
+        # Early stopping
+        if early_stopping_counter >= early_stopping_patience:
+            print(f"\nEarly stopping triggered at epoch {epoch+1}")
+            break
+    
+    print(f"\nTraining completed!")
+    print(f"  - Best validation accuracy: {best_val_acc:.4f} (epoch {best_epoch})")
+    print(f"  - Total epochs trained: {len(history['train_loss'])}")
+    
+    return {
+        'model': model,
+        'history': history,
+        'best_val_acc': best_val_acc,
+        'best_epoch': best_epoch
+    }
 
 def load_best_model(config, model_name, device):
     """
     Load the best trained model from checkpoints.
     """
-
+    # Build model architecture
     model = build_model(config, model_name)
     model.to(device)
-
-    checkpoint_dir = config.get("checkpoint_dir", "checkpoints")
-    checkpoint_path = os.path.join(
-        checkpoint_dir, f"{model_name}_best.pth"
-    )
-
-    if not os.path.exists(checkpoint_path):
-        raise FileNotFoundError(
-            f"Best model checkpoint not found: {checkpoint_path}"
-        )
-
-    # Loading checkpoint
+    
+    # Get checkpoint path
+    checkpoint_dir = Path(config.get('checkpoint_dir', 'checkpoints'))
+    checkpoint_path = checkpoint_dir / f"{model_name}_best.pth"
+    
+    if not checkpoint_path.exists():
+        raise FileNotFoundError(f"Best model checkpoint not found: {checkpoint_path}")
+    
+    # Load checkpoint
     checkpoint = torch.load(checkpoint_path, map_location=device)
-
-    # Loading model weights
-    model.load_state_dict(checkpoint["model_state_dict"])
-
-    # Evaluation mode
+    
+    # Load model weights
+    model.load_state_dict(checkpoint['model_state_dict'])
+    
+    # Set to evaluation mode
     model.eval()
-
+    
     print(f"Loaded best model from: {checkpoint_path}")
-
+    print(f"  - Best validation accuracy: {checkpoint['best_val_acc']:.4f}")
+    print(f"  - Training epoch: {checkpoint['epoch']}")
+    
     return model
-
-
-
-
-
-
-

@@ -2,6 +2,8 @@
 import os
 import pandas as pd
 from PIL import Image
+import numpy as np
+import matplotlib.pyplot as plt
 
 import torch
 from torch.utils.data import Dataset, DataLoader
@@ -85,7 +87,7 @@ class DriverDistractionDataset(Dataset):
         if images_dir and os.path.exists(images_dir):
             self.images_dir = images_dir
         else:
-            raise FileNotFoundError('Directory not found')
+            raise FileNotFoundError('Diroctory not found')
 
         self.transform = transform
 
@@ -116,7 +118,7 @@ def create_dataloader(
         batch_size=batch_size,
         shuffle=shuffle,
         num_workers=num_workers,
-        pin_memory=False
+        pin_memory=True
     )
 
     return loader
