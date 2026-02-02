@@ -1,8 +1,3 @@
-"""
-evaluate.py - Model Evaluation Module
-Simplified version for EfficientNet vs ResNet18 comparison
-"""
-
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -13,13 +8,6 @@ from datetime import datetime
 import io
 from contextlib import redirect_stdout
 
-<<<<<<< HEAD
-=======
-# ============================================================================
-# 1. CORE FUNCTIONS
-# ============================================================================
-
->>>>>>> 95bca15540162fd2703d035def71b15192a5ca6d
 def compute_model_metrics(y_true, y_pred, model_name):
     """Compute metrics for a single model."""
     return {
@@ -84,13 +72,6 @@ def get_best_model(metrics_dict):
     return max(avg_scores, key=avg_scores.get)
 
 
-<<<<<<< HEAD
-=======
-# ============================================================================
-# 2. VISUALIZATION FUNCTIONS
-# ============================================================================
-
->>>>>>> 95bca15540162fd2703d035def71b15192a5ca6d
 def plot_metrics_comparison(metrics_dict, model_names, class_names):
     """Compare global metrics across models."""
     fig, axes = plt.subplots(2, 2, figsize=(14, 10))
@@ -118,7 +99,7 @@ def plot_metrics_comparison(metrics_dict, model_names, class_names):
     return fig
 
 
-def plot_confusion_matrices(metrics_dict, model_names, class_names):
+def plot_confusion_matrix(metrics_dict, model_names, class_names):
     """Display confusion matrices side by side."""
     n_models = len(model_names)
     fig, axes = plt.subplots(1, n_models, figsize=(5*n_models, 4))
@@ -246,10 +227,6 @@ def generate_visualizations(metrics_dict, class_names, train_acc=None,
     return figs
 
 
-# ============================================================================
-# 3. RESULTS SAVING
-# ============================================================================
-
 def save_results_simple(metrics, figures, results_dir="results"):
     """Save visualizations and metrics summary."""
     # Create directories
@@ -320,13 +297,6 @@ def save_results_simple(metrics, figures, results_dir="results"):
     return saved_paths
 
 
-<<<<<<< HEAD
-=======
-# ============================================================================
-# 4. MAIN EVALUATION FUNCTION
-# ============================================================================
-
->>>>>>> 95bca15540162fd2703d035def71b15192a5ca6d
 def evaluate_models(y_true, predictions_dict, class_names=None, 
                    train_acc=None, val_acc=None, test_acc=None,
                    save_results=True, results_dir="results"):
