@@ -1,0 +1,81 @@
+├── 📁 config/                    # Configuration files
+│   ├── training.yaml           # Training hyperparameters
+│   ├── model.yaml              # Model architectures
+│   └── class_mapping.yaml      # Class names mapping
+│
+├── 📁 data/                     # Data directory
+│   ├── 📁 raw/                  # Original images organized by class
+│   │   ├── 📁 c0_safe_driving/
+│   │   │   ├── img_1.jpg
+│   │   │   ├── img_2.jpg
+│   │   │   └── ...
+│   │   │
+│   │   ├── 📁 c1_texting_right/
+│   │   │   ├── img_1.jpg
+│   │   │   └── ...
+│   │   │
+│   │   ├── 📁 c2_talking_phone_right/
+│   │   │   └── ...
+│   │   │
+│   │   ├── 📁 c3_texting_left/
+│   │   │   └── ...
+│   │   │
+│   │   ├── 📁 c4_talking_phone_left/
+│   │   │   └── ...
+│   │   │
+│   │   ├── 📁 c5_operating_radio/
+│   │   │   └── ...
+│   │   │
+│   │   ├── 📁 c6_drinking/
+│   │   │   └── ...
+│   │   │
+│   │   ├── 📁 c7_reaching_behind/
+│   │   │   └── ...
+│   │   │
+│   │   ├── 📁 c8_hair_makeup/
+│   │   │   └── ...
+│   │   │
+│   │   └── 📁 c9_talking_passenger/
+│   │       └── ...
+│   │
+│   ├── 📁 annotations/          # Data splits and labels
+│   │   ├── train_labels.csv    
+│   │   ├── val_labels.csv      
+│   │    |── test_labels.csv     
+│   │   ├── all_labels_complete.csv
+│   
+│
+├── 📁 src/                      # Source code
+│   ├── preprocess.py           # Data loading and transformations
+│   ├── train_classifier.py     # Training functions
+│   ├── evaluate.py             # Evaluation and comparison
+│   
+│   
+│
+├── 📁 results/                  # Generated results (auto-created)
+│   ├── 📁 checkpoints/         # Model checkpoints
+│   │   ├── resnet50_20240101_1430.pth
+│   │   ├── resnet50_best.pth
+│   │   ├── resnet50_last.pth
+│   │   ├── efficientnet_b3_20240101_1500.pth
+│   │   ├── efficientnet_b3_best.pth
+│   │   └── efficientnet_b3_last.pth
+│   │
+│   ├── 📁 model_comparison/    # Evaluation results
+│   │   ├── 📁 visualizations/
+│   │   │   ├── global_metrics_comparison.png
+│   │   │   ├── confusion_matrices.png
+│   │   │   ├── accuracy_per_class.png
+│   │   │   └── phase_comparison.png
+│   │   │
+│   │   └── 📁 metrics/
+│   │       ├── 20240101_1430_metrics_summary.json
+│   │       └── 20240101_1430_results_table.txt
+│   │
+│   ├── training_complete_summary.json
+│   
+│
+├── 📁 notebooks/               # Jupyter notebooks
+│   ├── pipeline.ipynb         # Main training pipeline
+│   ├── data_exploration.ipynb # Data analysis
+│   └── preprocessing.ipynb    # Model testing

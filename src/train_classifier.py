@@ -1,13 +1,23 @@
+<<<<<<< HEAD
 import yaml
 import random
 from pathlib import Path
 from tqdm.notebook import tqdm
 import numpy as np
+=======
+"""Training functions for driver distraction detection"""
+
+import os
+import sys
+from pathlib import Path
+from datetime import datetime
+>>>>>>> 95bca15540162fd2703d035def71b15192a5ca6d
 
 import torch
 import torch.nn as nn
 import torchvision.models as models
 import torch.optim as optim
+<<<<<<< HEAD
 from torch.optim import lr_sheduler
 
 
@@ -15,6 +25,25 @@ def load_training_config(training_cfg_path, model_cfg_path):
     """
     Load configuration files.
     """
+=======
+from torch.optim.lr_scheduler import (
+    StepLR,
+    CosineAnnealingLR,
+    ReduceLROnPlateau
+)
+
+import pandas as pd 
+import numpy as np
+import random
+import yaml
+from tqdm.notebook import tqdm
+
+def load_training_config(training_cfg_path, model_cfg_path):
+    """
+    Load and merge configuration files.
+    """
+    # Load YAML files
+>>>>>>> 95bca15540162fd2703d035def71b15192a5ca6d
     with open(training_cfg_path, "r") as f:
         training_cfg = yaml.safe_load(f)
 
@@ -31,12 +60,22 @@ def load_training_config(training_cfg_path, model_cfg_path):
 
 def setup_environment(config):
     """
+<<<<<<< HEAD
     Setup training environment.
     """
     # Device
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
     # Random seeds
+=======
+    Setup training environment with reproducibility.
+    Returns only the device.
+    """
+    # Set device
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    
+    # Set random seeds for reproducibility
+>>>>>>> 95bca15540162fd2703d035def71b15192a5ca6d
     seed = config.get("seed", 42)
     random.seed(seed)
     np.random.seed(seed)
@@ -53,12 +92,22 @@ def build_model(config, model_name):
     """
     Build a model based on the configuration.
     """
+<<<<<<< HEAD
     if 'models' in config and model_name in config['models']:
         model_cfg = config['models'][model_name]
     else:
         raise ValueError(f"'{model_name}' not found ")
     
     # Model's parameters
+=======
+    # Get model configuration from the models section
+    if 'models' in config and model_name in config['models']:
+        model_cfg = config['models'][model_name]
+    else:
+        raise ValueError(f"Model '{model_name}' not found in configuration")
+    
+    # Extract model parameters
+>>>>>>> 95bca15540162fd2703d035def71b15192a5ca6d
     num_classes = model_cfg.get("num_classes", 10)
     pretrained = model_cfg.get("pretrained", True)
     classifier_cfg = model_cfg.get("classifier", {})
@@ -68,8 +117,13 @@ def build_model(config, model_name):
     freeze_backbone = ft_cfg.get("freeze_backbone", False)
     unfreeze_from_layer = ft_cfg.get("unfreeze_from_layer", None)
     use_bn = model_cfg.get("use_batch_norm", True)
+<<<<<<< HEAD
     
     # Loading backbone
+=======
+
+    # Load backbone based on model name
+>>>>>>> 95bca15540162fd2703d035def71b15192a5ca6d
     if model_name.lower() == "resnet50":
         model = models.resnet50(pretrained=pretrained)
         in_features = model.fc.in_features
@@ -79,7 +133,11 @@ def build_model(config, model_name):
     else:
         raise ValueError(f"Unsupported model: {model_name}")
 
+<<<<<<< HEAD
     # Tranfer learning
+=======
+    # Apply fine-tuning settings
+>>>>>>> 95bca15540162fd2703d035def71b15192a5ca6d
     if freeze_backbone:
         for param in model.parameters():
             param.requires_grad = False
@@ -90,9 +148,13 @@ def build_model(config, model_name):
                 unfreeze_flag = True
             param.requires_grad = unfreeze_flag
 
-    # Replace classifier head
+    # Build classifier layers
     layers = []
     if hidden_dim:
+<<<<<<< HEAD
+=======
+        # With hidden layer
+>>>>>>> 95bca15540162fd2703d035def71b15192a5ca6d
         layers.append(nn.Linear(in_features, hidden_dim))
         if use_bn:
             layers.append(nn.BatchNorm1d(hidden_dim))
@@ -100,9 +162,14 @@ def build_model(config, model_name):
         layers.append(nn.Dropout(p=dropout_p))
         layers.append(nn.Linear(hidden_dim, num_classes))
     else:
+<<<<<<< HEAD
+=======
+        # Direct classification
+>>>>>>> 95bca15540162fd2703d035def71b15192a5ca6d
         layers.append(nn.Dropout(p=dropout_p))
         layers.append(nn.Linear(in_features, num_classes))
 
+    # Replace the classifier
     if model_name.lower() == "resnet50":
         model.fc = nn.Sequential(*layers)
     elif model_name.lower() == "efficientnet_b3":
@@ -112,7 +179,11 @@ def build_model(config, model_name):
 
 def build_loss_function(config):
     """
+<<<<<<< HEAD
     CrossEntropyLoss
+=======
+    Build loss function from configuration.
+>>>>>>> 95bca15540162fd2703d035def71b15192a5ca6d
     """
     loss_cfg = config.get("loss", {})
     
@@ -135,13 +206,18 @@ def build_loss_function(config):
 
 def build_optimizer(model, config):
     """
-    Optimizer (Adam / AdamW).
+    Build optimizer from configuration.
     """
     optim_cfg = config.get("optimizer", {})
     
     optimizer_name = optim_cfg.get("name", "adamw").lower()
     lr = optim_cfg.get("lr", 1e-3)
     weight_decay = optim_cfg.get("weight_decay", 1e-4)
+<<<<<<< HEAD
+=======
+
+    # Filter parameters that require gradients
+>>>>>>> 95bca15540162fd2703d035def71b15192a5ca6d
     params = filter(lambda p: p.requires_grad, model.parameters())
 
     if optimizer_name == "adam":
@@ -163,7 +239,11 @@ def build_optimizer(model, config):
 
 def build_scheduler(optimizer, config):
     """
+<<<<<<< HEAD
     Learning rate sheduler.
+=======
+    Build learning rate scheduler from configuration.
+>>>>>>> 95bca15540162fd2703d035def71b15192a5ca6d
     """
     sched_cfg = config.get("scheduler", {})
     
@@ -201,7 +281,11 @@ def build_scheduler(optimizer, config):
 
 def train_one_epoch(model, train_loader, criterion, optimizer, device):
     """
+<<<<<<< HEAD
     Training for one epoch.
+=======
+    Train for one epoch.
+>>>>>>> 95bca15540162fd2703d035def71b15192a5ca6d
     """
     model.train()
     running_loss = 0.0
@@ -222,11 +306,19 @@ def train_one_epoch(model, train_loader, criterion, optimizer, device):
         loss.backward()
         optimizer.step()
 
+<<<<<<< HEAD
+=======
+        # Statistics
+>>>>>>> 95bca15540162fd2703d035def71b15192a5ca6d
         running_loss += loss.item() * images.size(0)
         _, preds = torch.max(outputs, dim=1)
         correct += (preds == labels).sum().item()
         total += labels.size(0)
 
+<<<<<<< HEAD
+=======
+    # Calculate epoch metrics
+>>>>>>> 95bca15540162fd2703d035def71b15192a5ca6d
     avg_loss = running_loss / total if total > 0 else 0.0
     accuracy = correct / total if total > 0 else 0.0
 
@@ -254,6 +346,10 @@ def validate_one_epoch(model, val_loader, criterion, device):
             correct += (preds == labels).sum().item()
             total += labels.size(0)
 
+<<<<<<< HEAD
+=======
+    # Calculate epoch metrics
+>>>>>>> 95bca15540162fd2703d035def71b15192a5ca6d
     avg_loss = running_loss / total if total > 0 else 0.0
     accuracy = correct / total if total > 0 else 0.0
 
@@ -263,6 +359,7 @@ def save_checkpoint(state, config, is_best):
     """
     Save model checkpoint.
     """
+<<<<<<< HEAD
     model_name = state.get("model_name", None)
     
     # checkpoint directory
@@ -289,10 +386,54 @@ def train_classifier(config, model_name, train_loader, val_loader):
     model = build_model(config, model_name)
     model.to(device)
     
+=======
+    # Get model name from state
+    model_name = state.get('model_name', 'model')
+    
+    # Get checkpoint directory
+    checkpoint_dir = Path(config.get('checkpoint_dir', 'checkpoints'))
+    checkpoint_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Save last checkpoint
+    last_checkpoint_path = checkpoint_dir / f"{model_name}_last.pth"
+    torch.save(state, last_checkpoint_path)
+    
+    # Save best checkpoint if it's the best model
+    if is_best:
+        best_checkpoint_path = checkpoint_dir / f"{model_name}_best.pth"
+        torch.save(state, best_checkpoint_path)
+
+def train_classifier(config, model_name, train_loader, val_loader, checkpoints_dir):
+    """
+    Main training function for a single model.
+    """
+    # Setup environment
+    device = setup_environment(config)
+    
+    # Build model
+    model = build_model(config, model_name)
+    model.to(device)
+    
+    # Calculate model statistics
+    total_params = sum(p.numel() for p in model.parameters())
+    trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    
+    print(f"Model statistics:")
+    print(f"  - Total parameters: {total_params:,}")
+    print(f"  - Trainable parameters: {trainable_params:,}")
+    print(f"  - Trainable percentage: {trainable_params/total_params*100:.1f}%")
+    
+    # Build loss function
+>>>>>>> 95bca15540162fd2703d035def71b15192a5ca6d
     criterion = build_loss_function(config)
+    
+    # Build optimizer
     optimizer = build_optimizer(model, config)
+    
+    # Build scheduler
     scheduler = build_scheduler(optimizer, config)
     
+<<<<<<< HEAD
     training_params = config.get('training', {})
     num_epochs = training_params.get('epochs', 15)
     patience = training_params.get('patience', 5)
@@ -304,14 +445,46 @@ def train_classifier(config, model_name, train_loader, val_loader):
         
     # Training loop
     for epoch in range(num_epochs):        
+=======
+    # Training parameters
+    training_params = config.get('training', {})
+    num_epochs = training_params.get('epochs', 30)
+    early_stopping_patience = training_params.get('early_stopping_patience', 7)
+    
+    # Training history
+    history = {
+        'train_loss': [],
+        'train_acc': [],
+        'val_loss': [],
+        'val_acc': []
+    }
+    
+    # Training state
+    best_val_acc = 0.0
+    best_epoch = 0
+    early_stopping_counter = 0
+    
+    print(f"\nStarting training for {num_epochs} epochs...")
+    
+    # Training loop
+    for epoch in range(num_epochs):
+        print(f"\nEpoch [{epoch+1}/{num_epochs}]")
+        
+        # Training phase
+>>>>>>> 95bca15540162fd2703d035def71b15192a5ca6d
         train_loss, train_acc = train_one_epoch(
             model, train_loader, criterion, optimizer, device
         )
         
+<<<<<<< HEAD
+=======
+        # Validation phase
+>>>>>>> 95bca15540162fd2703d035def71b15192a5ca6d
         val_loss, val_acc = validate_one_epoch(
             model, val_loader, criterion, device
         )
         
+<<<<<<< HEAD
 
         if scheduler is not None:
             if isinstance(scheduler, lr_sheduler.ReduceLROnPlateau):
@@ -320,11 +493,34 @@ def train_classifier(config, model_name, train_loader, val_loader):
                 scheduler.step()
               
         # Best model check
+=======
+        # Update learning rate
+        current_lr = optimizer.param_groups[0]['lr']
+        if scheduler is not None:
+            if isinstance(scheduler, ReduceLROnPlateau):
+                scheduler.step(val_loss)
+            else:
+                scheduler.step()
+        
+        # Record history
+        history['train_loss'].append(train_loss)
+        history['train_acc'].append(train_acc)
+        history['val_loss'].append(val_loss)
+        history['val_acc'].append(val_acc)
+        
+        # Display metrics
+        print(f"  Training   - Loss: {train_loss:.4f}, Accuracy: {train_acc:.4f}")
+        print(f"  Validation - Loss: {val_loss:.4f}, Accuracy: {val_acc:.4f}")
+        print(f"  Learning Rate: {current_lr:.6f}")
+        
+        # Check for best model
+>>>>>>> 95bca15540162fd2703d035def71b15192a5ca6d
         is_best = val_acc > best_val_acc
         
         if is_best:
             best_val_acc = val_acc
             best_epoch = epoch + 1
+<<<<<<< HEAD
             counter = 0
         else:
             counter += 1
@@ -349,11 +545,49 @@ def train_classifier(config, model_name, train_loader, val_loader):
     
     return {
         'model': model,
+=======
+            early_stopping_counter = 0
+            print(f"  ✓ New best model! Validation accuracy: {val_acc:.4f}")
+        else:
+            early_stopping_counter += 1
+            print(f"  Early stopping counter: {early_stopping_counter}/{early_stopping_patience}")
+        
+        # Create checkpoint
+        checkpoint_state = {
+            'epoch': epoch + 1,
+            'model_state': model.state_dict(),
+            'optimizer_state': optimizer.state_dict(),
+            'best_val_acc': best_val_acc,
+            'config': config,
+            'model_name': model_name,
+            'history': history
+        }
+        
+        # Save checkpoint
+        save_checkpoint(checkpoint_state, config, is_best)
+        
+        # Early stopping
+        if early_stopping_counter >= early_stopping_patience:
+            print(f"\nEarly stopping triggered at epoch {epoch+1}")
+            break
+    
+    print(f"\nTraining completed!")
+    print(f"  - Best validation accuracy: {best_val_acc:.4f} (epoch {best_epoch})")
+    print(f"  - Total epochs trained: {len(history['train_loss'])}")
+    
+    return {
+        'model': model,
+        'history': history,
+>>>>>>> 95bca15540162fd2703d035def71b15192a5ca6d
         'best_val_acc': best_val_acc,
         'best_epoch': best_epoch
     }
 
+<<<<<<< HEAD
 def load_model(config, model_name, device):
+=======
+def load_best_model(config, model_name, device):
+>>>>>>> 95bca15540162fd2703d035def71b15192a5ca6d
     """
     Load the best trained model from checkpoints.
     """

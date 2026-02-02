@@ -1,0 +1,9 @@
+
+Metric         resnet50       efficientnet_b3Best      
+-------------------------------------------------------
+Accuracy       0.7289           0.7517           efficientnet_b3
+Precision      0.7377           0.7561           efficientnet_b3
+Recall         0.7274           0.7486           efficientnet_b3
+F1-Score       0.7251           0.7487           efficientnet_b3
+
+Best model: efficientnet_b3 (average score: 0.7513)
