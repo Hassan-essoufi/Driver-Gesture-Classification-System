@@ -72,7 +72,7 @@ def get_best_model(metrics_dict):
     return max(avg_scores, key=avg_scores.get)
 
 
-def plot_metrics_comparison(metrics_dict, model_names, class_names):
+def plot_metrics_comparison(metrics_dict, model_names, _class_names=None):
     """Compare global metrics across models."""
     fig, axes = plt.subplots(2, 2, figsize=(14, 10))
     
@@ -80,7 +80,7 @@ def plot_metrics_comparison(metrics_dict, model_names, class_names):
     metric_keys = ['accuracy', 'precision', 'recall', 'f1']
     colors = ['#2E86AB', '#A23B72', '#73AB84', '#F18F01']
     
-    for idx, (ax, title, key, color) in enumerate(zip(axes.flat, metric_titles, metric_keys, colors)):
+    for ax, title, key, color in zip(axes.flat, metric_titles, metric_keys, colors):
         values = [metrics_dict[name][key] for name in model_names]
         
         bars = ax.bar(model_names, values, color=color, alpha=0.8)
@@ -110,10 +110,13 @@ def plot_confusion_matrix(metrics_dict, model_names, class_names):
     for ax, name in zip(axes, model_names):
         conf_matrix = metrics_dict[name]['confusion']
         sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues', ax=ax,
+                   xticklabels=class_names, yticklabels=class_names,
                    cbar_kws={'label': 'Count'})
         ax.set_title(name, fontweight='bold')
         ax.set_xlabel('Prediction')
         ax.set_ylabel('True Label')
+        ax.tick_params(axis='x', rotation=45)
+        ax.tick_params(axis='y', rotation=0)
     
     plt.suptitle('Confusion Matrices', fontsize=14, fontweight='bold')
     plt.tight_layout()
@@ -137,7 +140,7 @@ def plot_acc_class_metrics(metrics_dict, model_names, class_names):
                      width, label=name, alpha=0.8)
         
         # Add values on bars
-        for bar_idx, bar in enumerate(bars):
+        for bar in bars:
             height = bar.get_height()
             ax.text(bar.get_x() + bar.get_width()/2, height + 0.01,
                    f'{height:.2f}', ha='center', fontsize=8)
@@ -217,7 +220,7 @@ def generate_visualizations(metrics_dict, class_names, train_acc=None,
     
     figs = []
     figs.append(plot_metrics_comparison(metrics_dict, model_names, class_names))
-    figs.append(plot_confusion_matrices(metrics_dict, model_names, class_names))
+    figs.append(plot_confusion_matrix(metrics_dict, model_names, class_names))
     figs.append(plot_acc_class_metrics(metrics_dict, model_names, class_names))
     
     # Only add phase comparison if all accuracies are provided

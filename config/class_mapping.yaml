@@ -1,30 +1,30 @@
 classes:
   0:
-    name: safe_driving
+    safe_driving
 
   1:
-    name: texting_right
+    texting_right
 
   2:
-    name: talking_phone_right
+    talking_phone_right
 
   3:
-    name: texting_left
+    texting_left
 
   4:
-    name: talking_phone_left
+    talking_phone_left
 
   5:
-    name: operating_radio
+    operating_radio
 
   6:
-    name: drinking
+    drinking
 
   7:
-    name: reaching_behind
+    reaching_behind
 
   8:
-    name: hair_makeup
+    hair_makeup
 
   9:
-    name: talking_passenger
+    talking_passenger

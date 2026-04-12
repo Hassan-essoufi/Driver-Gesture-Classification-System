@@ -48,13 +48,8 @@ def get_val_transforms(input_size=(224, 224)):
     ])
 
 def get_test_transforms(input_size=(224, 224)):
-    """Test transformations"""
-
-    return transforms.Compose([
-        transforms.Resize(input_size),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD)
-    ])
+    """Test transformations — identical to validation (no augmentation)."""
+    return get_val_transforms(input_size)
 
 def denormalize_tensor(tensor):
     """Denormalizes a tensor for visualization"""

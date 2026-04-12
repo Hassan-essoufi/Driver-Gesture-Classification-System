@@ -1,14 +1,14 @@
 import yaml
 import random
 from pathlib import Path
-from tqdm.notebook import tqdm
+from tqdm.auto import tqdm
 import numpy as np
 
 import torch
 import torch.nn as nn
 import torchvision.models as models
 import torch.optim as optim
-from torch.optim import lr_sheduler
+from torch.optim import lr_scheduler
 
 
 def load_training_config(training_cfg_path, model_cfg_path):
@@ -79,7 +79,7 @@ def build_model(config, model_name):
     else:
         raise ValueError(f"Unsupported model: {model_name}")
 
-    # Tranfer learning
+    # Finetuning
     if freeze_backbone:
         for param in model.parameters():
             param.requires_grad = False
@@ -176,19 +176,19 @@ def build_scheduler(optimizer, config):
     scheduler_name = scheduler_name.lower()
 
     if scheduler_name == "step_lr":
-        scheduler = lr_sheduler.StepLR(
+        scheduler = lr_scheduler.StepLR(
             optimizer,
             step_size=sched_cfg.get("step_size", 10),
             gamma=sched_cfg.get("gamma", 0.1)
         )
     elif scheduler_name == "cosine":
-        scheduler = lr_sheduler.CosineAnnealingLR(
+        scheduler = lr_scheduler.CosineAnnealingLR(
             optimizer,
             T_max=sched_cfg.get("t_max", 20),
             eta_min=sched_cfg.get("eta_min", 1e-6)
         )
     elif scheduler_name == "reduce_on_plateau":
-        scheduler = lr_sheduler.ReduceLROnPlateau(
+        scheduler = lr_scheduler.ReduceLROnPlateau(
             optimizer,
             mode="max",
             factor=sched_cfg.get("factor", 0.1),
@@ -316,11 +316,16 @@ def train_classifier(config, model_name, train_loader, val_loader):
         val_loss, val_acc = validate_one_epoch(
             model, val_loader, criterion, device
         )
-        
+
+        print(
+            f"Epoch [{epoch+1}/{num_epochs}] "
+            f"Train Loss: {train_loss:.4f} | Train Acc: {train_acc:.4f} | "
+            f"Val Loss: {val_loss:.4f} | Val Acc: {val_acc:.4f}"
+        )
 
         if scheduler is not None:
-            if isinstance(scheduler, lr_sheduler.ReduceLROnPlateau):
-                scheduler.step(val_loss)
+            if isinstance(scheduler, lr_scheduler.ReduceLROnPlateau):
+                scheduler.step(val_acc)
             else:
                 scheduler.step()
               
@@ -337,6 +342,7 @@ def train_classifier(config, model_name, train_loader, val_loader):
         # Create checkpoint
         checkpoint_state = {
             'model_name': model_name,
+            'epoch': epoch +1,
             'model_state': model.state_dict(),
             'optimizer_state': optimizer.state_dict(),
             'best_val_acc': best_val_acc
@@ -377,9 +383,8 @@ def load_model(config, model_name, device):
     checkpoint = torch.load(checkpoint_path, map_location=device)
     
     # Load model weights
-    model.load_state_dict(checkpoint['model_state_dict'])
+    model.load_state_dict(checkpoint['model_state'])
     
-    # Set to evaluation mode
     model.eval()
     
     print(f"Loaded best model from: {checkpoint_path}")
