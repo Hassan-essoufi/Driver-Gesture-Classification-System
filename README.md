@@ -1,8 +1,12 @@
 # DriverGuard — Driver Behavior Classification System
 
-An AI-powered system that classifies driver behavior from images using deep learning. Built with PyTorch, FastAPI, and React.
+> An AI-powered system that classifies driver behavior from images using deep learning, served through a REST API with a real-time React dashboard.
 
----
+![Python](https://img.shields.io/badge/Python-3.11-blue?logo=python&logoColor=white)
+![PyTorch](https://img.shields.io/badge/PyTorch-2.1-EE4C2C?logo=pytorch&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.104-009688?logo=fastapi&logoColor=white)
+![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
 
 ## Overview
 
@@ -13,17 +17,15 @@ DriverGuard detects distracted driving behaviors from images and assigns a risk 
 | ID | Behavior | Risk |
 |----|----------|------|
 | 0 | Safe Driving | Safe |
-| 1 | Texting (Right Hand) | High |
-| 2 | Talking on Phone (Right) | High |
-| 3 | Texting (Left Hand) | High |
-| 4 | Talking on Phone (Left) | High |
+| 1 | Texting — Right Hand | High |
+| 2 | Talking on Phone — Right | High |
+| 3 | Texting — Left Hand | High |
+| 4 | Talking on Phone — Left | High |
 | 5 | Operating Radio | Medium |
 | 6 | Drinking | Medium |
 | 7 | Reaching Behind | Medium |
-| 8 | Hair & Makeup | Low |
+| 8 | Hair and Makeup | Low |
 | 9 | Talking to Passenger | Low |
-
----
 
 ## Models
 
@@ -34,114 +36,98 @@ DriverGuard detects distracted driving behaviors from images and assigns a risk 
 
 Both models were trained for 30 epochs with data augmentation, batch normalization, label smoothing, and learning rate scheduling.
 
----
-
 ## Project Structure
 
 ```
 Driver_Gesture_Detection_System/
 ├── config/
-│   ├── training.yaml        # Training hyperparameters
-│   ├── model.yaml           # Model architecture config
-│   └── class_mapping.yaml   # Class index → name mapping
-├── checkpoints/             # Model weights (not tracked in git)
+│   ├── training.yaml           # Training hyperparameters
+│   ├── model.yaml              # Model architecture config
+│   └── class_mapping.yaml      # Class index to name mapping
+├── checkpoints/                # Model weights (not tracked in git)
 │   ├── efficientnet_b3_best.pth
 │   └── resnet50_best.pth
 ├── src/
-│   ├── main.py              # FastAPI application
-│   ├── prediction.py        # Inference pipeline
-│   ├── preprocess.py        # Image preprocessing
-│   ├── train_classifier.py  # Model training logic
-│   └── evaluate.py          # Evaluation utilities
+│   ├── main.py                 # FastAPI application
+│   ├── prediction.py           # Inference pipeline
+│   ├── preprocess.py           # Image preprocessing and dataset
+│   ├── train_classifier.py     # Model training logic
+│   └── evaluate.py             # Evaluation and visualizations
 ├── frontend/
-│   ├── src/app/App.tsx      # React dashboard
+│   ├── src/app/App.tsx         # React dashboard
 │   ├── Dockerfile
 │   └── nginx.conf
 ├── notebooks/
-│   └── pipeline.ipynb       # Google Colab training notebook
-├── docs/screenshots/        # App screenshots
-├── results/                 # Training metrics and visualizations
-├── Dockerfile               # Backend image
+│   └── pipeline.ipynb          # Google Colab training notebook
+├── docs/screenshots/
+├── results/
+│   ├── metrics/
+│   └── visualizations/
+├── Dockerfile
 ├── docker-compose.yml
 └── requirements.txt
 ```
 
----
+## Quick Start
 
-## Quick Start (Docker)
+### Docker (Recommended)
 
-### Prerequisites
-- [Docker Desktop](https://www.docker.com/products/docker-desktop) installed and running
-
-### Run
+**Prerequisites:** [Docker Desktop](https://www.docker.com/products/docker-desktop) installed and running.
 
 ```bash
 git clone https://github.com/Hassan-essoufi/Driver-Gesture-Classification-System
 cd Driver_Gesture_Detection_System
 ```
 
-> **Note:** Model checkpoints are not included in the repo due to file size. Download them and place them in `checkpoints/`:
-> - `checkpoints/resnet50_best.pth`
-> - `checkpoints/efficientnet_b3_best.pth`
+> Model checkpoints are not included due to file size. Place them in `checkpoints/` before building:
+> `checkpoints/resnet50_best.pth` and `checkpoints/efficientnet_b3_best.pth`
 
 ```bash
 docker compose up --build
 ```
 
-- Frontend → `http://localhost`
-- Backend API → `http://localhost:8000`
-- API Docs → `http://localhost:8000/docs`
-
-### Stop
+| Service | URL |
+|---------|-----|
+| Frontend | http://localhost |
+| Backend API | http://localhost:8000 |
+| API Docs | http://localhost:8000/docs |
 
 ```bash
 docker compose down
 ```
 
----
+### Local Development
 
-## Local Development (without Docker)
-
-### Backend
+**Backend**
 
 ```bash
-# Create virtual environment
 python -m venv venv
-venv\Scripts\activate       # Windows
-source venv/bin/activate    # Linux/Mac
+venv\Scripts\activate        # Windows
+source venv/bin/activate     # Linux/Mac
 
-# Install dependencies
 pip install -r requirements.txt
-
-# Run
-cd src
-python main.py
+cd src && python main.py
 ```
 
-### Frontend
+**Frontend**
 
 ```bash
 cd frontend
 npm install
-npm run dev
+npm run dev                  # runs at http://localhost:5173
 ```
 
-Frontend runs at `http://localhost:5173`.
-
----
-
-## API
+## API Reference
 
 ### `POST /predict`
 
 Classify a driver image.
 
-**Query params:**
-- `model_name` — `resnet50` or `efficientnet_b3`
+| Parameter | Location | Value |
+|-----------|----------|-------|
+| `model_name` | Query param | `resnet50` or `efficientnet_b3` |
+| `file` | Form data | JPG, PNG, WebP — max 5MB |
 
-**Body:** `multipart/form-data` with `file` field (JPG, PNG, WebP — max 5MB)
-
-**Response:**
 ```json
 {
   "class": "Safe Driving",
@@ -154,52 +140,47 @@ Classify a driver image.
 
 Health check — returns `{"status": "ok"}`.
 
----
-
 ## Training Techniques
 
 ### Optimizer
-- **AdamW** — Adam with decoupled weight decay
-  - Learning rate: `0.0003`
-  - Weight decay: `0.0005`
+
+- **AdamW** — learning rate `0.0003`, weight decay `0.0005`
 
 ### Learning Rate Scheduling
-- **ReduceLROnPlateau** — reduces LR when validation loss stops improving
-  - Factor: `0.2` (multiply LR by 0.2 on plateau)
-  - Patience: `3` epochs before reducing
-  - Minimum LR: `1e-7`
+
+- **ReduceLROnPlateau** — factor `0.2`, patience `3` epochs, min LR `1e-7`
 
 ### Regularization
 
-| Technique | Details |
-|-----------|---------|
-| **Dropout** | 0.4 in the classifier head (both models) |
-| **Batch Normalization** | Applied after the hidden layer in the classifier |
-| **Weight Decay** | L2 regularization via AdamW (`0.0005`) |
-| **Label Smoothing** | `0.1` — prevents overconfident predictions |
-| **Early Stopping** | Stops training if val accuracy doesn't improve for `7` epochs |
-| **Frozen Backbone** | Pretrained backbone weights frozen — only classifier head trained |
+| Technique | Detail |
+|-----------|--------|
+| Dropout | 0.4 in the classifier head |
+| Batch Normalization | After the hidden linear layer |
+| Weight Decay | L2 via AdamW — `0.0005` |
+| Label Smoothing | `0.1` — prevents overconfident predictions |
+| Early Stopping | Patience of `7` epochs on validation accuracy |
+| Frozen Backbone | Only the classifier head is trained |
 
-### Data Augmentation (Training only)
+### Data Augmentation
 
-| Augmentation | Parameters |
-|-------------|------------|
+Applied to training splits only:
+
+| Transform | Parameters |
+|-----------|------------|
 | Random Horizontal Flip | p = 0.5 |
-| Random Rotation | ±10° |
+| Random Rotation | 10 degrees |
 | Color Jitter | brightness=0.2, contrast=0.2, saturation=0.2, hue=0.05 |
 | ImageNet Normalization | mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225] |
 
 ### Transfer Learning
-Both models are initialized with **ImageNet pretrained weights**. The backbone is frozen and only the custom classifier head is trained:
-```
-Pretrained Backbone → Flatten → Linear(512) → BatchNorm → ReLU → Dropout(0.4) → Linear(10)
-```
 
----
+ImageNet pretrained backbone — frozen. Only the custom head is trained:
+
+```
+Backbone -> Flatten -> Linear(512) -> BatchNorm -> ReLU -> Dropout(0.4) -> Linear(10)
+```
 
 ## Results
-
-### Metrics Comparison
 
 | Metric | ResNet50 | EfficientNet-B3 | Best |
 |--------|----------|-----------------|------|
@@ -208,9 +189,7 @@ Pretrained Backbone → Flatten → Linear(512) → BatchNorm → ReLU → Dropo
 | Recall | 98.96% | **99.13%** | EfficientNet-B3 |
 | F1-Score | 99.00% | **99.13%** | EfficientNet-B3 |
 
-**Best model: EfficientNet-B3** (average score: 99.14%)
-
-### Visualizations
+**Best model: EfficientNet-B3** — average score 99.14%
 
 **Confusion Matrices**
 ![Confusion Matrices](results/visualizations/20260415_085013_confusion_matrices.png)
@@ -224,44 +203,32 @@ Pretrained Backbone → Flatten → Linear(512) → BatchNorm → ReLU → Dropo
 **Train / Val / Test Phase Comparison**
 ![Phase Comparison](results/visualizations/20260415_085013_phase_comparison.png)
 
----
-
 ## Screenshots
 
-<div align="center">
-  <table>
-    <tr>
-      <td align="center"><b>Dashboard</b></td>
-      <td align="center"><b>Analyze — Drinking · Medium Risk</b></td>
-      <td align="center"><b>Analyze — Safe Driving</b></td>
-      <td align="center"><b>History</b></td>
-    </tr>
-    <tr>
-      <td><img src="docs/screenshots/Screenshot 2026-04-16 065223.png" width="380"/></td>
-      <td><img src="docs/screenshots/Screenshot 2026-04-16 065028.png" width="380"/></td>
-      <td><img src="docs/screenshots/Screenshot 2026-04-16 065149.png" width="380"/></td>
-      <td><img src="docs/screenshots/Screenshot 2026-04-16 065254.png" width="380"/></td>
-    </tr>
-  </table>
-</div>
+**Dashboard**
+![Dashboard](docs/screenshots/Screenshot%202026-04-16%20065223.png)
 
----
+**Analyze — Drinking - Medium Risk**
+![Analyze Drinking](docs/screenshots/Screenshot%202026-04-16%20065028.png)
 
-## Training (Google Colab)
+**Analyze — Safe Driving**
+![Analyze Safe](docs/screenshots/Screenshot%202026-04-16%20065149.png)
 
-Open `notebooks/pipeline.ipynb` in Google Colab with GPU runtime.
+**History**
+![History](docs/screenshots/Screenshot%202026-04-16%20065254.png)
 
-The notebook:
-1. Mounts Google Drive
-2. Copies data to local SSD for fast I/O
-3. Trains both models with early stopping
-4. Evaluates on test set and saves checkpoints to Drive
+## Training on Google Colab
 
-After training, download the `.pth` files and place them in `checkpoints/`.
+Open `notebooks/pipeline.ipynb` in Colab with a GPU runtime.
 
----
+1. Mount Google Drive
+2. Copy dataset to local SSD — ~10x faster I/O than Drive reads
+3. Train both models with early stopping and checkpointing
+4. Evaluate on test set — results saved to Drive
 
-## Environment Variables
+Download the `.pth` files after training and place them in `checkpoints/`.
+
+## Configuration
 
 | Variable | Default | Description |
 |----------|---------|-------------|
@@ -272,24 +239,23 @@ After training, download the `.pth` files and place them in `checkpoints/`.
 | `MAX_FILE_SIZE_MB` | `5` | Max upload size in MB |
 | `ALLOWED_ORIGINS` | `*` | CORS allowed origins |
 
----
+Model and training behavior is tunable via `config/training.yaml` and `config/model.yaml`.
 
 ## Tech Stack
 
-- **Backend** — Python, FastAPI, PyTorch, Uvicorn
-- **Frontend** — React, TypeScript, Vite, Tailwind CSS, Recharts
-- **Models** — EfficientNet-B3, ResNet50 (torchvision)
-- **Deployment** — Docker, Docker Compose, nginx
-
----
+| Layer | Tools |
+|-------|-------|
+| Backend | Python, FastAPI, PyTorch, Uvicorn |
+| Frontend | React, TypeScript, Vite, Tailwind CSS, Recharts |
+| Models | EfficientNet-B3, ResNet50 (torchvision) |
+| Deployment | Docker, Docker Compose, nginx |
 
 ## Author
 
 **Hassan Essoufi**
- Data & AI engineer
-
----
+- GitHub: [@Hassan-essoufi](https://github.com/Hassan-essoufi)
+- Email: hassanessoufi2004@gmail.com
 
 ## ⭐ Note
 
-If you find this project useful, consider giving it a ⭐ — it helps a lot!
+If you find this project useful, consider giving it a star ⭐, it helps a lot!
