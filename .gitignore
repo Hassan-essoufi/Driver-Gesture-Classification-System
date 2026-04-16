@@ -5,3 +5,8 @@ __pycache__/
 *.ipynb_checkpoints
 *.tmp
 .DS_Store
+checkpoints/
+venv/
+.env
+frontend/.env
+frontend/node_modules

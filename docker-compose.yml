@@ -1,0 +1,30 @@
+services:
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./temp:/app/temp
+    environment:
+      HOST: "0.0.0.0"
+      PORT: "8000"
+      RELOAD: "False"
+      THRESHOLD: "0.7"
+      MAX_FILE_SIZE_MB: "5"
+      ALLOWED_ORIGINS: "http://localhost,http://localhost:80"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://localhost:8000
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
