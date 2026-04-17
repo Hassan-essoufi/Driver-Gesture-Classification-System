@@ -211,9 +211,6 @@ Backbone -> Flatten -> Linear(512) -> BatchNorm -> ReLU -> Dropout(0.4) -> Linea
 **Analyze — Drinking - Medium Risk**
 ![Analyze Drinking](docs/screenshots/Screenshot%202026-04-16%20065028.png)
 
-**Analyze — Safe Driving**
-![Analyze Safe](docs/screenshots/Screenshot%202026-04-16%20065149.png)
-
 **History**
 ![History](docs/screenshots/Screenshot%202026-04-16%20065254.png)
 
